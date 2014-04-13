@@ -22,5 +22,8 @@ exports.run = (test)->
   core.run([])
   test.equal core.oscs.length, 0, "now 0 osc"
 
+  # now lets test with some waits.
+  
+
   spy.restore()
   test.done()

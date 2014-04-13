@@ -21,8 +21,18 @@
 
 },{}],2:[function(require,module,exports){
 (function() {
-  exports.run = function(startF) {
-    return startF * 4985 + 15;
+  exports.run = function(points, startP, accuracy) {
+    if (accuracy == null) {
+      accuracy = 0.01;
+    }
+    return points.filter(function(point) {
+      var pos;
+      if ((pos = (point.position != null) && point.position)) {
+        return pos >= startP - accuracy && pos <= startP + accuracy;
+      } else {
+        return true;
+      }
+    });
   };
 
 }).call(this);
@@ -30,7 +40,55 @@
 
 },{}],3:[function(require,module,exports){
 (function() {
-  var con, core;
+  exports.run = function(startF) {
+    return startF * 4985 + 15;
+  };
+
+}).call(this);
+
+
+},{}],4:[function(require,module,exports){
+(function() {
+  var con;
+
+  exports.core = require('./core.coffee');
+
+  exports.delay = function(func, time) {
+    return setTimeout(func, time);
+  };
+
+  exports.run = function(points, sleep, inc, pos, endPos) {
+    if (pos == null) {
+      pos = 0;
+    }
+    if (endPos == null) {
+      endPos = 1;
+    }
+    if (pos <= endPos) {
+      exports.core.run({
+        points: points,
+        position: pos
+      });
+    }
+    if (pos + inc <= endPos) {
+      return exports.delay(function() {
+        return exports.run(points, sleep, inc, pos + inc);
+      }, sleep);
+    }
+  };
+
+  if (typeof window !== 'undefined') {
+    window.run = exports.run;
+    con = AudioContext || webkitAudioContext;
+    exports.core.init(new con());
+  }
+
+}).call(this);
+
+
+},{"./core.coffee":5}],5:[function(require,module,exports){
+(function() {
+  var core;
 
   exports.player = require('./player.coffee');
 
@@ -58,19 +116,13 @@
   };
 
   exports.run = function(input) {
-    return exports.player.run(input.points, core.context);
+    return exports.player.run(input.points, core.context, input.position);
   };
-
-  if (typeof window !== 'undefined') {
-    window.run = exports.run;
-    con = AudioContext || webkitAudioContext;
-    exports.init(new con());
-  }
 
 }).call(this);
 
 
-},{"./player.coffee":4}],5:[function(require,module,exports){
+},{"./player.coffee":6}],7:[function(require,module,exports){
 (function() {
   var helpers;
 
@@ -98,18 +150,22 @@
 }).call(this);
 
 
-},{"./audiolib/osc_lib.coffee":1,"./music_helpers/music_helpers.coffee":6}],4:[function(require,module,exports){
+},{"./audiolib/osc_lib.coffee":1,"./music_helpers/music_helpers.coffee":8}],6:[function(require,module,exports){
 (function() {
-  var stream;
+  var helpers, stream;
 
   exports.output = require('./output.coffee');
 
   stream = require('./stream.coffee');
 
+  helpers = require('./music_helpers/music_helpers.coffee');
+
   exports.init = function() {
     exports.positions = stream.init();
     return exports.points = stream.init();
   };
+
+  exports.init();
 
   exports.run = function(points, context, position) {
     var pointsChanged, positionsChanged;
@@ -119,25 +175,29 @@
     pointsChanged = exports.points.run(points);
     positionsChanged = exports.positions.run(position);
     if (pointsChanged || positionsChanged) {
-      return exports.output.run(points, context);
+      return exports.output.run(helpers.filteredPoints.run(points, position), context);
     }
   };
 
 }).call(this);
 
 
-},{"./output.coffee":5,"./stream.coffee":7}],6:[function(require,module,exports){
+},{"./output.coffee":7,"./stream.coffee":9,"./music_helpers/music_helpers.coffee":8}],8:[function(require,module,exports){
 (function() {
-  var humanEar;
+  var filteredPoints, humanEar;
 
   humanEar = require('./human_ear.coffee');
 
+  filteredPoints = require('./filter_points.coffee');
+
   exports.humanEar = humanEar;
+
+  exports.filteredPoints = filteredPoints;
 
 }).call(this);
 
 
-},{"./human_ear.coffee":2}],7:[function(require,module,exports){
+},{"./human_ear.coffee":3,"./filter_points.coffee":2}],9:[function(require,module,exports){
 (function() {
   var _;
 
@@ -162,7 +222,7 @@
 }).call(this);
 
 
-},{"../node_modules/lodash/lodash":8}],8:[function(require,module,exports){
+},{"../node_modules/lodash/lodash":10}],10:[function(require,module,exports){
 (function(global){/**
  * @license
  * Lo-Dash 2.4.1 <http://lodash.com/>
@@ -7344,5 +7404,5 @@
 }.call(this));
 
 })(window)
-},{}]},{},[1,3,2,6,5,4,7])
+},{}]},{},[1,4,5,2,3,8,7,6,9])
 ;

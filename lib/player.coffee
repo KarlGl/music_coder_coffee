@@ -1,9 +1,12 @@
 exports.output = require './output.coffee'
 stream = require './stream.coffee'
+helpers = require './music_helpers/music_helpers.coffee'
 
 exports.init = ()->
   exports.positions = stream.init()
   exports.points = stream.init()
+
+exports.init()
 
 exports.run = (points, context, position=0)->
   # both have side effects, both should run not in the OR statement.
@@ -13,4 +16,6 @@ exports.run = (points, context, position=0)->
     # remove no longer used oscs.
     # add new oscs.
     # update current oscs
-    exports.output.run(points, context)
+    exports.output.run(
+      helpers.filteredPoints.run(points, position)
+      context)

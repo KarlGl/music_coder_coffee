@@ -24,5 +24,6 @@ exports.run2 = (test)->
     val: 0.5
   ])
   test.equal(create.callCount, 2, "2 oscs")
+
   create.restore()
   test.done()
