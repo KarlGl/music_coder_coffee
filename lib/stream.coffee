@@ -14,7 +14,7 @@ exports.init = ()->
   # returns if position is different from the last head.
   # side affect is storing it if it is different.
   run: (position)->
-    if !_.isEqual(
+    a = if !_.isEqual(
         position
         this.head)
       # push to stream
@@ -30,3 +30,4 @@ exports.init = ()->
     else
       this.waits += 1
       false
+    a

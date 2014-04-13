@@ -106,10 +106,13 @@
   };
 
   exports.run = function(points, context, position) {
+    var pointsChanged, positionsChanged;
     if (position == null) {
       position = 0;
     }
-    if (exports.positions.run(position) || exports.points.run(points)) {
+    pointsChanged = exports.points.run(points);
+    positionsChanged = exports.positions.run(position);
+    if (pointsChanged || positionsChanged) {
       return exports.output.run(points, context);
     }
   };
@@ -140,18 +143,12 @@
       stream: [],
       waits: 0,
       run: function(position) {
-        if (!_.isEqual(position, this.head)) {
-          this.stream.push({
-            waits: this.waits,
-            position: position
-          });
-          this.waits = 0;
-          this.head = position;
-          return true;
-        } else {
-          this.waits += 1;
-          return false;
-        }
+        var a;
+        a = !_.isEqual(position, this.head) ? (this.stream.push({
+          waits: this.waits,
+          position: position
+        }), this.waits = 0, this.head = position, true) : (this.waits += 1, false);
+        return a;
       }
     };
   };
