@@ -1,2 +1,3 @@
-window.input = 1
-exports.input = 1
+exports.init = (window)->
+  core = {}
+  window.core = core
