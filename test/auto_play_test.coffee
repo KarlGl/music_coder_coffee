@@ -9,12 +9,6 @@ exports.run = (test)->
     core
     'delay'
     (func)-> func())
-  oscSpy = sinon.stub(
-    core.core.player.output.oscLib
-    'makeOsc', ->
-      destroy: ->
-      setF: ->
-  )
   core.init(false)
 
   core.run([
@@ -25,10 +19,6 @@ exports.run = (test)->
 
   test.equal spy.callCount, 10, 'The delay func gets called 10 times... calling 11 plays...'
 
-  # could remove this test, kinda overboard
-  test.equal oscSpy.callCount, 3, '3 Oscs are made'
-
   spy.restore()
-  oscSpy.restore()
   test.done()
 

@@ -40,7 +40,7 @@
 (function() {
   exports.run = function(points, startP, accuracy) {
     if (accuracy == null) {
-      accuracy = 0.01;
+      accuracy = 0.1;
     }
     return points.filter(function(point) {
       var pos;
@@ -66,6 +66,66 @@
 
 },{}],5:[function(require,module,exports){
 (function() {
+  exports.core = require('./core.coffee');
+
+  exports.delay = function(func, time) {
+    if (exports.nextPlay) {
+      clearTimeout(exports.nextPlay);
+    }
+    return exports.nextPlay = setTimeout(func, time);
+  };
+
+  exports.init = function(isLoop) {
+    if (isLoop == null) {
+      isLoop = true;
+    }
+    return exports.isLoop = isLoop;
+  };
+
+  exports.init();
+
+  exports.runRecur = function(points, sleep, inc, pos, startPos, endPos, isLoop) {
+    var func, kill;
+    if (pos <= endPos) {
+      exports.core.run({
+        points: points,
+        position: pos
+      });
+      kill = exports.core.player.output.killAll;
+      func = function() {
+        return exports.runRecur(points, sleep, inc, pos + inc, startPos, endPos, isLoop);
+      };
+      if (pos + inc <= endPos) {
+        return exports.delay(func, sleep);
+      } else {
+        if (isLoop) {
+          kill();
+          return exports.run(points, sleep, inc, startPos, endPos);
+        } else {
+          return kill();
+        }
+      }
+    }
+  };
+
+  exports.run = function(points, sleep, inc, pos, endPos) {
+    if (pos == null) {
+      pos = 0;
+    }
+    if (endPos == null) {
+      endPos = 1;
+    }
+    if (exports.nextPlay) {
+      clearTimeout(exports.nextPlay);
+    }
+    return exports.runRecur(points, sleep, inc, pos, pos, endPos, exports.isLoop);
+  };
+
+}).call(this);
+
+
+},{"./core.coffee":6}],7:[function(require,module,exports){
+(function() {
   var con, helpers;
 
   exports.core = require('./auto_play.coffee');
@@ -74,10 +134,10 @@
 
   exports.init = function(quality, beatsPerBar) {
     if (quality == null) {
-      quality = 100;
+      quality = 10;
     }
     if (beatsPerBar == null) {
-      beatsPerBar = 4;
+      beatsPerBar = 1;
     }
     exports.quality = quality;
     return exports.beatsPerBar = beatsPerBar;
@@ -101,62 +161,7 @@
 }).call(this);
 
 
-},{"./auto_play.coffee":6,"./music_helpers/music_helpers.coffee":7}],6:[function(require,module,exports){
-(function() {
-  exports.core = require('./core.coffee');
-
-  exports.delay = function(func, time) {
-    if (exports.nextPlay) {
-      clearTimeout(exports.nextPlay);
-    }
-    return exports.nextPlay = setTimeout(func, time);
-  };
-
-  exports.init = function(isLoop) {
-    if (isLoop == null) {
-      isLoop = true;
-    }
-    return exports.isLoop = isLoop;
-  };
-
-  exports.init();
-
-  exports.runRecur = function(points, sleep, inc, pos, startPos, endPos, isLoop) {
-    var func;
-    if (pos <= endPos) {
-      exports.core.run({
-        points: points,
-        position: pos
-      });
-      func = function() {
-        return exports.runRecur(points, sleep, inc, pos + inc, startPos, endPos, isLoop);
-      };
-      if (pos + inc <= endPos) {
-        return exports.delay(func, sleep);
-      } else {
-        if (isLoop) {
-          return exports.delay(exports.runRecur(points, sleep, inc, startPos, startPos, endPos, exports.isLoop));
-        } else {
-          return exports.core.player.output.killAll();
-        }
-      }
-    }
-  };
-
-  exports.run = function(points, sleep, inc, pos, endPos) {
-    if (pos == null) {
-      pos = 0;
-    }
-    if (endPos == null) {
-      endPos = 1;
-    }
-    return exports.runRecur(points, sleep, inc, pos, pos, endPos, exports.isLoop);
-  };
-
-}).call(this);
-
-
-},{"./core.coffee":8}],8:[function(require,module,exports){
+},{"./auto_play.coffee":5,"./music_helpers/music_helpers.coffee":8}],6:[function(require,module,exports){
 (function() {
   var core;
 
@@ -186,7 +191,7 @@
   };
 
   exports.run = function(input) {
-    return exports.player.run(input.points, core.context, input.position);
+    return exports.player.run(input.points, core.context, input.position, 0.1);
   };
 
 }).call(this);
@@ -206,17 +211,29 @@
     });
   };
 
-  exports.run = function(positions, context) {
-    exports.killAll();
-    exports.oscs = positions.map(function(position) {
+  exports.makeAll = function(positions, context) {
+    return exports.oscs = positions.map(function(position) {
       var osc;
       exports.oscs.push(osc = exports.oscLib.makeOsc(context));
       position.osc = osc;
       return position;
     });
-    return exports.oscs.map(function(position) {
-      return position.osc.setF(helpers.humanEar.run(position.val));
+  };
+
+  exports.setF = function(vals) {
+    return exports.oscs.map(function(position, i) {
+      return position.osc.setF(helpers.humanEar.run(vals[i]));
     });
+  };
+
+  exports.run = function(positions, context) {
+    if (positions.length !== exports.oscs.length) {
+      exports.killAll();
+      exports.makeAll(positions, context);
+    }
+    return exports.setF(positions.map(function(position) {
+      return position.val;
+    }));
   };
 
   exports.oscs = [];
@@ -224,7 +241,7 @@
 }).call(this);
 
 
-},{"./audiolib/osc_lib.coffee":1,"./music_helpers/music_helpers.coffee":7}],9:[function(require,module,exports){
+},{"./audiolib/osc_lib.coffee":1,"./music_helpers/music_helpers.coffee":8}],9:[function(require,module,exports){
 (function() {
   var helpers, stream;
 
@@ -241,22 +258,25 @@
 
   exports.init();
 
-  exports.run = function(points, context, position) {
+  exports.run = function(points, context, position, accuracy) {
     var pointsChanged, positionsChanged;
     if (position == null) {
       position = 0;
     }
+    if (accuracy == null) {
+      accuracy = 0.01;
+    }
     pointsChanged = exports.points.run(points);
     positionsChanged = exports.positions.run(position);
     if (pointsChanged || positionsChanged) {
-      return exports.output.run(helpers.filteredPoints.run(points, position), context);
+      return exports.output.run(helpers.filteredPoints.run(points, position, accuracy), context);
     }
   };
 
 }).call(this);
 
 
-},{"./output.coffee":10,"./stream.coffee":11,"./music_helpers/music_helpers.coffee":7}],7:[function(require,module,exports){
+},{"./output.coffee":10,"./stream.coffee":11,"./music_helpers/music_helpers.coffee":8}],8:[function(require,module,exports){
 (function() {
   var bpmConvert, filteredPoints, humanEar;
 
@@ -7482,5 +7502,5 @@
 }.call(this));
 
 })(window)
-},{}]},{},[1,6,5,8,2,3,4,7,10,9,11])
+},{}]},{},[1,5,7,6,2,3,4,8,10,9,11])
 ;

@@ -1,10 +1,10 @@
 exports.core = require './core.coffee'
 
 exports.delay = (func, time)->
-  if (exports.nextPlay)
-    clearTimeout(exports.nextPlay)
   # only one of these per instance,
   # clear it so we never have 2
+  if (exports.nextPlay)
+    clearTimeout(exports.nextPlay)
   exports.nextPlay = setTimeout(
     func
     time)
@@ -21,6 +21,8 @@ exports.runRecur = (points, sleep, inc, pos, startPos, endPos, isLoop)->
       position: pos
     )
 
+    kill = exports.core.player.output.killAll
+
     func = ->
       exports.runRecur(points, sleep, inc, pos + inc, startPos, endPos, isLoop)
     if (pos + inc <= endPos)
@@ -30,11 +32,16 @@ exports.runRecur = (points, sleep, inc, pos, startPos, endPos, isLoop)->
       )
     else
       if (isLoop)
-        exports.delay(
-          exports.runRecur(points, sleep, inc, startPos, startPos, endPos, exports.isLoop)
-        )
+        kill()
+        # can not delay here! will cancel
+        # exports.delay(
+        exports.run(points, sleep, inc, startPos, endPos)
+          # sleep
+        # )
       else
-        exports.core.player.output.killAll()
+        kill()
 
 exports.run = (points, sleep, inc, pos=0, endPos=1)->
+  if (exports.nextPlay)
+    clearTimeout(exports.nextPlay)
   exports.runRecur(points, sleep, inc, pos, pos, endPos, exports.isLoop)

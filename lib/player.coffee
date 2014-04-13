@@ -8,7 +8,7 @@ exports.init = ()->
 
 exports.init()
 
-exports.run = (points, context, position=0)->
+exports.run = (points, context, position=0, accuracy=0.01)->
   # both have side effects, both should run not in the OR statement.
   pointsChanged = exports.points.run(points)
   positionsChanged = exports.positions.run(position)
@@ -17,5 +17,5 @@ exports.run = (points, context, position=0)->
     # add new oscs.
     # update current oscs
     exports.output.run(
-      helpers.filteredPoints.run(points, position)
+      helpers.filteredPoints.run(points, position, accuracy)
       context)

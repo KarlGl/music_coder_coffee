@@ -18,6 +18,7 @@ exports.init = (context)->
 
 exports.run = (input)->
   exports.player.run(
-    input.points, 
-    core.context, 
-    input.position)
+    input.points 
+    core.context
+    input.position
+    0.1)

@@ -2,7 +2,7 @@
 exports.core = require './auto_play.coffee'
 helpers = require './music_helpers/music_helpers.coffee'
 
-exports.init = (quality=100, beatsPerBar=4)->
+exports.init = (quality=10, beatsPerBar=1)->
   exports.quality = quality 
   exports.beatsPerBar = beatsPerBar
 exports.init()
