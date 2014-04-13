@@ -22,7 +22,7 @@ module.exports = function(grunt) {
         coffeeify: {
             options: {},
             files: {
-                src: ['lib/**/*.coffee'],
+                src: '<%= src.lib.src %>',
                 dest: 'dist/main.js'
             }
         },
