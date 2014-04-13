@@ -16,47 +16,28 @@ module.exports = function(grunt) {
                 src: ['lib/**/*.coffee']
             },
             test: {
-                src: ['test/**/*.js']
+                src: ['test/**/*.coffee']
             },
         },
-        coffee: {
-            compile: {
-                files: {
-                    // 'path/to/result.js': 'path/to/source.coffee', // 1:1 compile
-                    'dist/all.js': '<%= src.lib.src %>' // compile and concat into single file
-                }
+        coffeeify: {
+            options: {},
+            files: {
+                src: ['lib/**/*.coffee'],
+                dest: 'dist/main.js'
             }
         },
-        concat: {
-            options: {
-                banner: '<%= banner %>',
-                stripBanners: true
-            },
-            dist: {
-                src: ['lib/<%= pkg.name %>.js'],
-                dest: 'dist/<%= pkg.name %>.js'
-            },
-        },
-        uglify: {
-            options: {
-                banner: '<%= banner %>'
-            },
-            dist: {
-                src: '<%= concat.dist.dest %>',
-                dest: 'dist/<%= pkg.name %>.min.js'
-            },
-        },
+
         nodeunit: {
-            files: ['test/**/*_test.js']
+            files: '<%= src.test.src %>'
         },
         watch: {
             gruntfile: {
                 files: '<%= src.gruntfile.src %>',
-                tasks: []
+                tasks: ['coffeeify', 'nodeunit']
             },
             lib: {
                 files: '<%= src.lib.src %>',
-                tasks: ['coffee']
+                tasks: ['coffeeify', 'nodeunit']
             },
             test: {
                 files: '<%= src.test.src %>',
@@ -66,13 +47,11 @@ module.exports = function(grunt) {
     });
 
     // These plugins provide necessary tasks.
-    grunt.loadNpmTasks('grunt-contrib-concat');
-    grunt.loadNpmTasks('grunt-contrib-uglify');
+    grunt.loadNpmTasks('grunt-coffeeify');
     grunt.loadNpmTasks('grunt-contrib-nodeunit');
     grunt.loadNpmTasks('grunt-contrib-watch');
-    grunt.loadNpmTasks('grunt-contrib-coffee');
 
     // Default task.
-    grunt.registerTask('default', ['coffee', 'nodeunit']);
+    grunt.registerTask('default', ['coffeeify', 'nodeunit']);
 
 };
