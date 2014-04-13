@@ -49,12 +49,56 @@
 
 },{}],4:[function(require,module,exports){
 (function() {
-  var con;
+  exports.run = function(bpm, quality, beatsPerBar) {
+    var samplesPerMinute;
+    if (beatsPerBar == null) {
+      beatsPerBar = 4;
+    }
+    samplesPerMinute = bpm / beatsPerBar;
+    return {
+      increment: 1 / quality,
+      sleep: (60000 / samplesPerMinute) / quality
+    };
+  };
 
+}).call(this);
+
+
+},{}],5:[function(require,module,exports){
+(function() {
   exports.core = require('./core.coffee');
 
   exports.delay = function(func, time) {
     return setTimeout(func, time);
+  };
+
+  exports.init = function(isLoop) {
+    if (isLoop == null) {
+      isLoop = true;
+    }
+    return exports.isLoop = isLoop;
+  };
+
+  exports.init();
+
+  exports.runRecur = function(points, sleep, inc, pos, startPos, endPos, isLoop) {
+    var func;
+    if (pos <= endPos) {
+      exports.core.run({
+        points: points,
+        position: pos
+      });
+      func = function() {
+        return exports.runRecur(points, sleep, inc, pos + inc, startPos, endPos, isLoop);
+      };
+      if (pos + inc <= endPos) {
+        return exports.delay(func, sleep);
+      } else {
+        if (isLoop) {
+          return exports.runRecur(points, sleep, inc, startPos, startPos, endPos, exports.isLoop);
+        }
+      }
+    }
   };
 
   exports.run = function(points, sleep, inc, pos, endPos) {
@@ -64,29 +108,49 @@
     if (endPos == null) {
       endPos = 1;
     }
-    if (pos <= endPos) {
-      exports.core.run({
-        points: points,
-        position: pos
-      });
+    return exports.runRecur(points, sleep, inc, pos, pos, endPos, exports.isLoop);
+  };
+
+}).call(this);
+
+
+},{"./core.coffee":6}],7:[function(require,module,exports){
+(function() {
+  var con, helpers;
+
+  exports.core = require('./auto_play.coffee');
+
+  helpers = require('./music_helpers/music_helpers.coffee');
+
+  exports.init = function(quality, beatsPerBar) {
+    if (quality == null) {
+      quality = 100;
     }
-    if (pos + inc <= endPos) {
-      return exports.delay(function() {
-        return exports.run(points, sleep, inc, pos + inc);
-      }, sleep);
+    if (beatsPerBar == null) {
+      beatsPerBar = 4;
     }
+    exports.quality = quality;
+    return exports.beatsPerBar = beatsPerBar;
+  };
+
+  exports.init();
+
+  exports.run = function(points, bpm) {
+    var a;
+    a = helpers.bpmConvert.run(bpm, exports.quality, exports.beatsPerBar);
+    return exports.core.run(points, a.sleep, a.increment);
   };
 
   if (typeof window !== 'undefined') {
     window.run = exports.run;
     con = AudioContext || webkitAudioContext;
-    exports.core.init(new con());
+    exports.core.core.init(new con());
   }
 
 }).call(this);
 
 
-},{"./core.coffee":5}],5:[function(require,module,exports){
+},{"./auto_play.coffee":5,"./music_helpers/music_helpers.coffee":8}],6:[function(require,module,exports){
 (function() {
   var core;
 
@@ -122,7 +186,7 @@
 }).call(this);
 
 
-},{"./player.coffee":6}],7:[function(require,module,exports){
+},{"./player.coffee":9}],10:[function(require,module,exports){
 (function() {
   var helpers;
 
@@ -150,7 +214,7 @@
 }).call(this);
 
 
-},{"./audiolib/osc_lib.coffee":1,"./music_helpers/music_helpers.coffee":8}],6:[function(require,module,exports){
+},{"./audiolib/osc_lib.coffee":1,"./music_helpers/music_helpers.coffee":8}],9:[function(require,module,exports){
 (function() {
   var helpers, stream;
 
@@ -182,22 +246,26 @@
 }).call(this);
 
 
-},{"./output.coffee":7,"./stream.coffee":9,"./music_helpers/music_helpers.coffee":8}],8:[function(require,module,exports){
+},{"./output.coffee":10,"./stream.coffee":11,"./music_helpers/music_helpers.coffee":8}],8:[function(require,module,exports){
 (function() {
-  var filteredPoints, humanEar;
+  var bpmConvert, filteredPoints, humanEar;
 
   humanEar = require('./human_ear.coffee');
 
   filteredPoints = require('./filter_points.coffee');
 
+  bpmConvert = require('./bpm_convert.coffee');
+
   exports.humanEar = humanEar;
 
   exports.filteredPoints = filteredPoints;
 
+  exports.bpmConvert = bpmConvert;
+
 }).call(this);
 
 
-},{"./human_ear.coffee":3,"./filter_points.coffee":2}],9:[function(require,module,exports){
+},{"./human_ear.coffee":3,"./filter_points.coffee":2,"./bpm_convert.coffee":4}],11:[function(require,module,exports){
 (function() {
   var _;
 
@@ -222,7 +290,7 @@
 }).call(this);
 
 
-},{"../node_modules/lodash/lodash":10}],10:[function(require,module,exports){
+},{"../node_modules/lodash/lodash":12}],12:[function(require,module,exports){
 (function(global){/**
  * @license
  * Lo-Dash 2.4.1 <http://lodash.com/>
@@ -7404,5 +7472,5 @@
 }.call(this));
 
 })(window)
-},{}]},{},[1,4,5,2,3,8,7,6,9])
+},{}]},{},[1,5,7,6,2,3,4,8,10,9,11])
 ;

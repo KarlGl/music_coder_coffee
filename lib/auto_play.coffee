@@ -5,23 +5,29 @@ exports.delay = (func, time)->
     func
     time)
 
-exports.run = (points, sleep, inc, pos=0, endPos=1)->
+exports.init = (isLoop=true)->
+  exports.isLoop = isLoop  
+exports.init()
+
+exports.runRecur = (points, sleep, inc, pos, startPos, endPos, isLoop)->
+
   if (pos <= endPos)
     exports.core.run(
       points: points
       position: pos
     )
 
-  # if we can call it once more... do it
-  if (pos + inc <= endPos)
-    exports.delay(
-      ->
-        exports.run(points, sleep, inc, pos + inc)
-      sleep
-    )
+    # if we can call it once more... do it
+    func = ->
+      exports.runRecur(points, sleep, inc, pos + inc, startPos, endPos, isLoop)
+    if (pos + inc <= endPos)
+      exports.delay(
+        func
+        sleep
+      )
+    else
+      if (isLoop)
+        exports.runRecur(points, sleep, inc, startPos, startPos, endPos, exports.isLoop)
 
-if (typeof(window) != 'undefined')
-  # globally export our functions
-  window.run = exports.run
-  con = AudioContext || webkitAudioContext
-  exports.core.init(new con())
+exports.run = (points, sleep, inc, pos=0, endPos=1)->
+  exports.runRecur(points, sleep, inc, pos, pos, endPos, exports.isLoop)
