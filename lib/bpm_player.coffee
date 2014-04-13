@@ -18,5 +18,6 @@ exports.run = (points, bpm)->
 if (typeof(window) != 'undefined')
   # globally export our functions
   window.run = exports.run
+  window.core = exports
   con = AudioContext || webkitAudioContext
   exports.core.core.init(new con())

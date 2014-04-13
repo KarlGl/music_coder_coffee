@@ -1,7 +1,11 @@
 exports.core = require './core.coffee'
 
 exports.delay = (func, time)->
-  setTimeout(
+  if (exports.nextPlay)
+    clearTimeout(exports.nextPlay)
+  # only one of these per instance,
+  # clear it so we never have 2
+  exports.nextPlay = setTimeout(
     func
     time)
 
@@ -17,7 +21,6 @@ exports.runRecur = (points, sleep, inc, pos, startPos, endPos, isLoop)->
       position: pos
     )
 
-    # if we can call it once more... do it
     func = ->
       exports.runRecur(points, sleep, inc, pos + inc, startPos, endPos, isLoop)
     if (pos + inc <= endPos)
@@ -27,7 +30,11 @@ exports.runRecur = (points, sleep, inc, pos, startPos, endPos, isLoop)->
       )
     else
       if (isLoop)
-        exports.runRecur(points, sleep, inc, startPos, startPos, endPos, exports.isLoop)
+        exports.delay(
+          exports.runRecur(points, sleep, inc, startPos, startPos, endPos, exports.isLoop)
+        )
+      else
+        exports.core.player.output.killAll()
 
 exports.run = (points, sleep, inc, pos=0, endPos=1)->
   exports.runRecur(points, sleep, inc, pos, pos, endPos, exports.isLoop)
