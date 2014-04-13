@@ -79,12 +79,18 @@
   helpers = require('./music_helpers/music_helpers.coffee');
 
   exports.run = function(positions, context) {
-    positions.map(function(position) {
+    exports.oscs.forEach(function(position) {
+      return position.osc.destroy();
+    });
+    exports.oscs = positions.map(function(position) {
       var osc;
       exports.oscs.push(osc = exports.oscLib.makeOsc(context));
-      return osc.setF(helpers.humanEar.run(position.val));
+      position.osc = osc;
+      return position;
     });
-    return this;
+    return exports.oscs.map(function(position) {
+      return position.osc.setF(helpers.humanEar.run(position.val));
+    });
   };
 
   exports.oscs = [];

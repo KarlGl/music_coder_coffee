@@ -13,5 +13,4 @@ exports.run = (points, context, position=0)->
     # remove no longer used oscs.
     # add new oscs.
     # update current oscs
-    # true
     exports.output.run(points, context)
