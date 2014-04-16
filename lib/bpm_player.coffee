@@ -1,19 +1,17 @@
+#
 # bpm player: can loop, play at a bpm instead of inc and sleep.
+#
+
 exports.core = require './auto_play.coffee'
 helpers = require './music_helpers/music_helpers.coffee'
 
-exports.init = (quality=10, beatsPerBar=1)->
-  exports.quality = quality 
-  exports.beatsPerBar = beatsPerBar
-exports.init()
+exports.kill = exports.core.kill
 
-exports.run = (points, bpm)->
-  a = helpers.bpmConvert.run(bpm, exports.quality, exports.beatsPerBar)
-  exports.core.run(
-    points
-    a.sleep
-    a.increment
-  )
+exports.run = (params)->
+  a = helpers.bpmConvert.run(params.bpm, params.quality, params.beatsPerBar)
+  params.sleep = a.sleep
+  params.increment = a.increment
+  exports.core.run params
 
 if (typeof(window) != 'undefined')
   # globally export our functions

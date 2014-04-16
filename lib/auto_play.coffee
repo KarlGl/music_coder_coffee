@@ -9,39 +9,36 @@ exports.delay = (func, time)->
     func
     time)
 
-exports.init = (isLoop=true)->
-  exports.isLoop = isLoop  
-exports.init()
+exports.kill = exports.core.player.output.killAll
 
-exports.runRecur = (points, sleep, inc, pos, startPos, endPos, isLoop)->
-
-  if (pos <= endPos)
+exports.runRecur = (params, pos)->
+  if (pos <= params.endPos)
     exports.core.run(
-      points: points
+      points: params.points
       position: pos
     )
 
-    kill = exports.core.player.output.killAll
+    kill = exports.kill
 
     func = ->
-      exports.runRecur(points, sleep, inc, pos + inc, startPos, endPos, isLoop)
-    if (pos + inc <= endPos)
+      exports.runRecur(params, pos + params.increment)
+    if (pos + params.increment <= params.endPos)
       exports.delay(
         func
-        sleep
+        params.sleep
       )
     else
-      if (isLoop)
+      if (params.isLoop)
         kill()
         # can not delay here! will cancel
         # exports.delay(
-        exports.run(points, sleep, inc, startPos, endPos)
+        exports.run(params)
           # sleep
         # )
       else
         kill()
 
-exports.run = (points, sleep, inc, pos=0, endPos=1)->
+exports.run = (params)->
   if (exports.nextPlay)
     clearTimeout(exports.nextPlay)
-  exports.runRecur(points, sleep, inc, pos, pos, endPos, exports.isLoop)
+  exports.runRecur(params, params.startPos)

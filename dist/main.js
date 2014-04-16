@@ -21,6 +21,45 @@
 
 },{}],2:[function(require,module,exports){
 (function() {
+  var cb;
+
+  if (typeof window !== 'undefined') {
+    cb = function(message) {
+      var area, args;
+      console.log(message);
+      area = message.area;
+      if (area.isPlaying) {
+        args = {
+          points: area.units.map(function(unit) {
+            return {
+              position: unit.x,
+              val: unit.y
+            };
+          }),
+          bpm: 60,
+          quality: 1 / area.blockSize,
+          beatsPerBar: 1,
+          startPos: area.upto,
+          endPos: 1,
+          isLoop: area.isLooping
+        };
+        return window.core.run(args);
+      } else {
+        return core.kill();
+      }
+    };
+    window.callbacks = {
+      playBar: cb,
+      playBtn: cb,
+      loopBtn: cb
+    };
+  }
+
+}).call(this);
+
+
+},{}],3:[function(require,module,exports){
+(function() {
   exports.run = function(bpm, quality, beatsPerBar) {
     var samplesPerMinute;
     if (beatsPerBar == null) {
@@ -36,7 +75,7 @@
 }).call(this);
 
 
-},{}],3:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 (function() {
   exports.run = function(points, startP, accuracy) {
     if (accuracy == null) {
@@ -55,7 +94,7 @@
 }).call(this);
 
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 (function() {
   exports.run = function(startF) {
     return startF * 4985 + 15;
@@ -64,7 +103,7 @@
 }).call(this);
 
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 (function() {
   exports.core = require('./core.coffee');
 
@@ -75,32 +114,25 @@
     return exports.nextPlay = setTimeout(func, time);
   };
 
-  exports.init = function(isLoop) {
-    if (isLoop == null) {
-      isLoop = true;
-    }
-    return exports.isLoop = isLoop;
-  };
+  exports.kill = exports.core.player.output.killAll;
 
-  exports.init();
-
-  exports.runRecur = function(points, sleep, inc, pos, startPos, endPos, isLoop) {
+  exports.runRecur = function(params, pos) {
     var func, kill;
-    if (pos <= endPos) {
+    if (pos <= params.endPos) {
       exports.core.run({
-        points: points,
+        points: params.points,
         position: pos
       });
-      kill = exports.core.player.output.killAll;
+      kill = exports.kill;
       func = function() {
-        return exports.runRecur(points, sleep, inc, pos + inc, startPos, endPos, isLoop);
+        return exports.runRecur(params, pos + params.increment);
       };
-      if (pos + inc <= endPos) {
-        return exports.delay(func, sleep);
+      if (pos + params.increment <= params.endPos) {
+        return exports.delay(func, params.sleep);
       } else {
-        if (isLoop) {
+        if (params.isLoop) {
           kill();
-          return exports.run(points, sleep, inc, startPos, endPos);
+          return exports.run(params);
         } else {
           return kill();
         }
@@ -108,23 +140,17 @@
     }
   };
 
-  exports.run = function(points, sleep, inc, pos, endPos) {
-    if (pos == null) {
-      pos = 0;
-    }
-    if (endPos == null) {
-      endPos = 1;
-    }
+  exports.run = function(params) {
     if (exports.nextPlay) {
       clearTimeout(exports.nextPlay);
     }
-    return exports.runRecur(points, sleep, inc, pos, pos, endPos, exports.isLoop);
+    return exports.runRecur(params, params.startPos);
   };
 
 }).call(this);
 
 
-},{"./core.coffee":6}],7:[function(require,module,exports){
+},{"./core.coffee":7}],8:[function(require,module,exports){
 (function() {
   var con, helpers;
 
@@ -132,23 +158,14 @@
 
   helpers = require('./music_helpers/music_helpers.coffee');
 
-  exports.init = function(quality, beatsPerBar) {
-    if (quality == null) {
-      quality = 10;
-    }
-    if (beatsPerBar == null) {
-      beatsPerBar = 1;
-    }
-    exports.quality = quality;
-    return exports.beatsPerBar = beatsPerBar;
-  };
+  exports.kill = exports.core.kill;
 
-  exports.init();
-
-  exports.run = function(points, bpm) {
+  exports.run = function(params) {
     var a;
-    a = helpers.bpmConvert.run(bpm, exports.quality, exports.beatsPerBar);
-    return exports.core.run(points, a.sleep, a.increment);
+    a = helpers.bpmConvert.run(params.bpm, params.quality, params.beatsPerBar);
+    params.sleep = a.sleep;
+    params.increment = a.increment;
+    return exports.core.run(params);
   };
 
   if (typeof window !== 'undefined') {
@@ -161,7 +178,7 @@
 }).call(this);
 
 
-},{"./auto_play.coffee":5,"./music_helpers/music_helpers.coffee":8}],6:[function(require,module,exports){
+},{"./auto_play.coffee":6,"./music_helpers/music_helpers.coffee":9}],7:[function(require,module,exports){
 (function() {
   var core;
 
@@ -197,7 +214,7 @@
 }).call(this);
 
 
-},{"./player.coffee":9}],10:[function(require,module,exports){
+},{"./player.coffee":10}],11:[function(require,module,exports){
 (function() {
   var helpers;
 
@@ -241,7 +258,7 @@
 }).call(this);
 
 
-},{"./audiolib/osc_lib.coffee":1,"./music_helpers/music_helpers.coffee":8}],9:[function(require,module,exports){
+},{"./audiolib/osc_lib.coffee":1,"./music_helpers/music_helpers.coffee":9}],10:[function(require,module,exports){
 (function() {
   var helpers, stream;
 
@@ -276,7 +293,7 @@
 }).call(this);
 
 
-},{"./output.coffee":10,"./stream.coffee":11,"./music_helpers/music_helpers.coffee":8}],8:[function(require,module,exports){
+},{"./output.coffee":11,"./stream.coffee":12,"./music_helpers/music_helpers.coffee":9}],9:[function(require,module,exports){
 (function() {
   var bpmConvert, filteredPoints, humanEar;
 
@@ -295,7 +312,7 @@
 }).call(this);
 
 
-},{"./human_ear.coffee":4,"./filter_points.coffee":3,"./bpm_convert.coffee":2}],11:[function(require,module,exports){
+},{"./human_ear.coffee":5,"./filter_points.coffee":4,"./bpm_convert.coffee":3}],12:[function(require,module,exports){
 (function() {
   var _;
 
@@ -320,7 +337,7 @@
 }).call(this);
 
 
-},{"../node_modules/lodash/lodash":12}],12:[function(require,module,exports){
+},{"../node_modules/lodash/lodash":13}],13:[function(require,module,exports){
 (function(global){/**
  * @license
  * Lo-Dash 2.4.1 <http://lodash.com/>
@@ -7502,5 +7519,5 @@
 }.call(this));
 
 })(window)
-},{}]},{},[1,5,7,6,2,3,4,8,10,9,11])
+},{}]},{},[1,6,8,7,2,3,4,5,9,11,10,12])
 ;
