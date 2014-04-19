@@ -1,4 +1,5 @@
 exports.core = require './core.coffee'
+snap = require './music_helpers/snap.coffee'
 
 exports.delay = (func, time)->
   # only one of these per instance,
@@ -9,14 +10,21 @@ exports.delay = (func, time)->
     func
     time)
 
-exports.kill = exports.core.player.output.killAll
+exports.kill = ->
+  if (exports.nextPlay)
+    clearTimeout(exports.nextPlay)
+  exports.core.player.output.killAll
 
 exports.runRecur = (params, pos)->
+  pos = snap.snapToGrid(pos, params.blockSize)
   if (pos <= params.endPos)
-    exports.core.run(
+    # play at pos...
+    exports.core.run
       points: params.points
       position: pos
-    )
+      eachPlayStartCallback: params.eachPlayStartCallback
+      blockSize: params.blockSize
+    
 
     kill = exports.kill
 
@@ -39,6 +47,7 @@ exports.runRecur = (params, pos)->
         kill()
 
 exports.run = (params)->
-  if (exports.nextPlay)
-    clearTimeout(exports.nextPlay)
+  exports.kill()
+  # SNAP TO GRID
+  params.startPos = snap.snapToGrid(params.startPos, params.blockSize)
   exports.runRecur(params, params.startPos)

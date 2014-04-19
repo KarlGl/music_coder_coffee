@@ -1,10 +1,12 @@
 # 
-# This sets all the callbacks for the frontend.
-# It's our messaging system.
+# This is where we subscribe to messages from the frontend.
+# e.g. on isPlaying button changing state, do what callback?
 # 
 
-if (typeof(window) != 'undefined')
-  cb = (message)->
+if (window?)
+
+  # restart playback. The callback for everything.
+  restartPlayback = (message)->
       console.log(message)
       area = message.area
       if area.isPlaying
@@ -12,19 +14,30 @@ if (typeof(window) != 'undefined')
           points: area.units.map (unit)->
             position: unit.x
             val: unit.y
-          bpm: 60
+          bpm: area.bpm
 
           # how many blocks possible in a row without touching basically.
           quality: 1 / area.blockSize
-          
+          blockSize: area.blockSize
           beatsPerBar: 1
-          startPos: area.upto
+          startPos: area.playSlider
           endPos: 1
           isLoop: area.isLooping
+
+          eachPlayStartCallback: (newPos)->
+            area.playIndicator.setX(newPos)
+
         window.core.run(args)
       else
-        core.kill()
+        window.core.kill()
   window.callbacks = 
-    playBar: cb
-    playBtn: cb
-    loopBtn: cb
+    
+    #sliders
+    playSlider: restartPlayback
+    bpm: restartPlayback
+
+    #buttons
+    isLooping: restartPlayback
+    isPlaying: restartPlayback
+    isFreeplay: restartPlayback
+    changedUnits: restartPlayback

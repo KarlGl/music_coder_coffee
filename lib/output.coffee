@@ -1,3 +1,7 @@
+#
+# 
+#
+
 exports.oscLib = require './audiolib/osc_lib.coffee'
 helpers = require './music_helpers/music_helpers.coffee'
 
@@ -22,11 +26,15 @@ exports.setF = (vals)->
 # update current oscs
 exports.run = (positions, context)->
   if (positions.length != exports.oscs.length)
+    console.log("number of units changed", positions)
     # destroy all oscs
     exports.killAll()
     # make all new oscs from POSITIONS.
     exports.makeAll(positions, context)
   # setF of all oscs
+  else
+    console.log("number of units did not change", positions)
+
   exports.setF(positions.map((position)-> position.val))
 
 exports.oscs = []

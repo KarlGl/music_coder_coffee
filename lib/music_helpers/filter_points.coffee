@@ -1,9 +1,19 @@
 # Only show points near the passed in startP.
 #
+fixJsNumbers = (number)->
+  parseFloat(number.toPrecision(12))
+
 exports.run = (points, startP, accuracy=0.1)->
+  accuracy = fixJsNumbers(accuracy)
   points.filter (point)->
-    if (pos = point.position? && point.position)
-      (pos >= startP - accuracy && pos <= startP + accuracy)
+    if (point.position?)
+      startP = fixJsNumbers(startP)
+      pos = fixJsNumbers point.position
+      (pos > fixJsNumbers(startP - accuracy) && pos < fixJsNumbers(startP + accuracy))
     else
+      # no position, just play it!
       true
+
+if (window?)
+  window.filterPoints = exports
   

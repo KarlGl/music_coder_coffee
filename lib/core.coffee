@@ -17,8 +17,11 @@ exports.init = (context)->
   exports.player.init()
 
 exports.run = (input)->
+  if (input.eachPlayStartCallback?)
+    input.eachPlayStartCallback(input.position)
   exports.player.run(
     input.points 
     core.context
     input.position
-    0.1)
+    input.blockSize
+  )

@@ -21,10 +21,10 @@
 
 },{}],2:[function(require,module,exports){
 (function() {
-  var cb;
+  var restartPlayback;
 
-  if (typeof window !== 'undefined') {
-    cb = function(message) {
+  if ((typeof window !== "undefined" && window !== null)) {
+    restartPlayback = function(message) {
       var area, args;
       console.log(message);
       area = message.area;
@@ -36,22 +36,29 @@
               val: unit.y
             };
           }),
-          bpm: 60,
+          bpm: area.bpm,
           quality: 1 / area.blockSize,
+          blockSize: area.blockSize,
           beatsPerBar: 1,
-          startPos: area.upto,
+          startPos: area.playSlider,
           endPos: 1,
-          isLoop: area.isLooping
+          isLoop: area.isLooping,
+          eachPlayStartCallback: function(newPos) {
+            return area.playIndicator.setX(newPos);
+          }
         };
         return window.core.run(args);
       } else {
-        return core.kill();
+        return window.core.kill();
       }
     };
     window.callbacks = {
-      playBar: cb,
-      playBtn: cb,
-      loopBtn: cb
+      playSlider: restartPlayback,
+      bpm: restartPlayback,
+      isLooping: restartPlayback,
+      isPlaying: restartPlayback,
+      isFreeplay: restartPlayback,
+      changedUnits: restartPlayback
     };
   }
 
@@ -77,19 +84,32 @@
 
 },{}],4:[function(require,module,exports){
 (function() {
+  var fixJsNumbers;
+
+  fixJsNumbers = function(number) {
+    return parseFloat(number.toPrecision(12));
+  };
+
   exports.run = function(points, startP, accuracy) {
     if (accuracy == null) {
       accuracy = 0.1;
     }
+    accuracy = fixJsNumbers(accuracy);
     return points.filter(function(point) {
       var pos;
-      if ((pos = (point.position != null) && point.position)) {
-        return pos >= startP - accuracy && pos <= startP + accuracy;
+      if ((point.position != null)) {
+        startP = fixJsNumbers(startP);
+        pos = fixJsNumbers(point.position);
+        return pos > fixJsNumbers(startP - accuracy) && pos < fixJsNumbers(startP + accuracy);
       } else {
         return true;
       }
     });
   };
+
+  if ((typeof window !== "undefined" && window !== null)) {
+    window.filterPoints = exports;
+  }
 
 }).call(this);
 
@@ -105,7 +125,23 @@
 
 },{}],6:[function(require,module,exports){
 (function() {
+  exports.snapToGrid = function(pos, gridCellSize) {
+    if (gridCellSize == null) {
+      gridCellSize = 0.1;
+    }
+    return gridCellSize * Math.round(pos / gridCellSize);
+  };
+
+}).call(this);
+
+
+},{}],7:[function(require,module,exports){
+(function() {
+  var snap;
+
   exports.core = require('./core.coffee');
+
+  snap = require('./music_helpers/snap.coffee');
 
   exports.delay = function(func, time) {
     if (exports.nextPlay) {
@@ -114,14 +150,22 @@
     return exports.nextPlay = setTimeout(func, time);
   };
 
-  exports.kill = exports.core.player.output.killAll;
+  exports.kill = function() {
+    if (exports.nextPlay) {
+      clearTimeout(exports.nextPlay);
+    }
+    return exports.core.player.output.killAll;
+  };
 
   exports.runRecur = function(params, pos) {
     var func, kill;
+    pos = snap.snapToGrid(pos, params.blockSize);
     if (pos <= params.endPos) {
       exports.core.run({
         points: params.points,
-        position: pos
+        position: pos,
+        eachPlayStartCallback: params.eachPlayStartCallback,
+        blockSize: params.blockSize
       });
       kill = exports.kill;
       func = function() {
@@ -141,16 +185,15 @@
   };
 
   exports.run = function(params) {
-    if (exports.nextPlay) {
-      clearTimeout(exports.nextPlay);
-    }
+    exports.kill();
+    params.startPos = snap.snapToGrid(params.startPos, params.blockSize);
     return exports.runRecur(params, params.startPos);
   };
 
 }).call(this);
 
 
-},{"./core.coffee":7}],8:[function(require,module,exports){
+},{"./core.coffee":8,"./music_helpers/snap.coffee":6}],9:[function(require,module,exports){
 (function() {
   var con, helpers;
 
@@ -178,7 +221,7 @@
 }).call(this);
 
 
-},{"./auto_play.coffee":6,"./music_helpers/music_helpers.coffee":9}],7:[function(require,module,exports){
+},{"./auto_play.coffee":7,"./music_helpers/music_helpers.coffee":10}],8:[function(require,module,exports){
 (function() {
   var core;
 
@@ -208,13 +251,16 @@
   };
 
   exports.run = function(input) {
-    return exports.player.run(input.points, core.context, input.position, 0.1);
+    if ((input.eachPlayStartCallback != null)) {
+      input.eachPlayStartCallback(input.position);
+    }
+    return exports.player.run(input.points, core.context, input.position, input.blockSize);
   };
 
 }).call(this);
 
 
-},{"./player.coffee":10}],11:[function(require,module,exports){
+},{"./player.coffee":11}],12:[function(require,module,exports){
 (function() {
   var helpers;
 
@@ -245,8 +291,11 @@
 
   exports.run = function(positions, context) {
     if (positions.length !== exports.oscs.length) {
+      console.log("number of units changed", positions);
       exports.killAll();
       exports.makeAll(positions, context);
+    } else {
+      console.log("number of units did not change", positions);
     }
     return exports.setF(positions.map(function(position) {
       return position.val;
@@ -258,7 +307,7 @@
 }).call(this);
 
 
-},{"./audiolib/osc_lib.coffee":1,"./music_helpers/music_helpers.coffee":9}],10:[function(require,module,exports){
+},{"./audiolib/osc_lib.coffee":1,"./music_helpers/music_helpers.coffee":10}],11:[function(require,module,exports){
 (function() {
   var helpers, stream;
 
@@ -286,6 +335,7 @@
     pointsChanged = exports.points.run(points);
     positionsChanged = exports.positions.run(position);
     if (pointsChanged || positionsChanged) {
+      console.log("playing at position", position);
       return exports.output.run(helpers.filteredPoints.run(points, position, accuracy), context);
     }
   };
@@ -293,9 +343,9 @@
 }).call(this);
 
 
-},{"./output.coffee":11,"./stream.coffee":12,"./music_helpers/music_helpers.coffee":9}],9:[function(require,module,exports){
+},{"./output.coffee":12,"./stream.coffee":13,"./music_helpers/music_helpers.coffee":10}],10:[function(require,module,exports){
 (function() {
-  var bpmConvert, filteredPoints, humanEar;
+  var bpmConvert, filteredPoints, humanEar, snap;
 
   humanEar = require('./human_ear.coffee');
 
@@ -303,16 +353,20 @@
 
   bpmConvert = require('./bpm_convert.coffee');
 
+  snap = require('./bpm_convert.coffee');
+
   exports.humanEar = humanEar;
 
   exports.filteredPoints = filteredPoints;
 
   exports.bpmConvert = bpmConvert;
 
+  exports.snap = snap;
+
 }).call(this);
 
 
-},{"./human_ear.coffee":5,"./filter_points.coffee":4,"./bpm_convert.coffee":3}],12:[function(require,module,exports){
+},{"./human_ear.coffee":5,"./filter_points.coffee":4,"./bpm_convert.coffee":3}],13:[function(require,module,exports){
 (function() {
   var _;
 
@@ -337,7 +391,7 @@
 }).call(this);
 
 
-},{"../node_modules/lodash/lodash":13}],13:[function(require,module,exports){
+},{"../node_modules/lodash/lodash":14}],14:[function(require,module,exports){
 (function(global){/**
  * @license
  * Lo-Dash 2.4.1 <http://lodash.com/>
@@ -7519,5 +7573,5 @@
 }.call(this));
 
 })(window)
-},{}]},{},[1,6,8,7,2,3,4,5,9,11,10,12])
+},{}]},{},[1,7,9,8,2,3,4,5,10,6,12,11,13])
 ;

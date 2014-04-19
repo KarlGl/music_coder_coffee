@@ -20,7 +20,7 @@ exports.run = (test)->
     increment: 0.1,
     startPos: 0,
     endPos: 1,
-    isLoop: false,
+    isLoop: false
   })
 
   test.equal spy.callCount, 10, 'The delay func gets called 10 times... calling 11 plays...'
