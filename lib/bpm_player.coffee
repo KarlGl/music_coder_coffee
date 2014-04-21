@@ -1,3 +1,7 @@
+# 
+# SOUND PAINT
+#
+
 #
 # bpm player: can loop, play at a bpm instead of inc and sleep.
 #
@@ -13,9 +17,12 @@ exports.run = (params)->
   params.increment = a.increment
   exports.core.run params
 
-if (typeof(window) != 'undefined')
+if (window?)
   # globally export our functions
   window.run = exports.run
   window.core = exports
-  con = AudioContext || webkitAudioContext
+  if AudioContext?
+    con = AudioContext
+  if webkitAudioContext?
+    con = webkitAudioContext
   exports.core.core.init(new con())

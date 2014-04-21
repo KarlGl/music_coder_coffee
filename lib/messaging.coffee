@@ -41,3 +41,4 @@ if (window?)
     isPlaying: restartPlayback
     isFreeplay: restartPlayback
     changedUnits: restartPlayback
+    areaResize: restartPlayback
