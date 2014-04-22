@@ -117,8 +117,18 @@
 
 },{}],5:[function(require,module,exports){
 (function() {
+  var HIGHEST_POSSIBLE_FREQUENCY, LOWSEST_POSSIBLE_FREQUENCY;
+
+  LOWSEST_POSSIBLE_FREQUENCY = 15;
+
+  HIGHEST_POSSIBLE_FREQUENCY = 1000;
+
   exports.run = function(startF) {
-    return startF * 4985 + 15;
+    return startF * HIGHEST_POSSIBLE_FREQUENCY + LOWSEST_POSSIBLE_FREQUENCY;
+  };
+
+  exports.freqToRange = function(startF) {
+    return (startF - LOWSEST_POSSIBLE_FREQUENCY) / HIGHEST_POSSIBLE_FREQUENCY;
   };
 
 }).call(this);
@@ -266,43 +276,7 @@
 }).call(this);
 
 
-},{"./player.coffee":11}],11:[function(require,module,exports){
-(function() {
-  var helpers, stream;
-
-  exports.output = require('./output.coffee');
-
-  stream = require('./stream.coffee');
-
-  helpers = require('./music_helpers/music_helpers.coffee');
-
-  exports.init = function() {
-    exports.positions = stream.init();
-    return exports.points = stream.init();
-  };
-
-  exports.init();
-
-  exports.run = function(points, context, position, accuracy) {
-    var pointsChanged, positionsChanged;
-    if (position == null) {
-      position = 0;
-    }
-    if (accuracy == null) {
-      accuracy = 0.01;
-    }
-    pointsChanged = exports.points.run(points);
-    positionsChanged = exports.positions.run(position);
-    if (pointsChanged || positionsChanged) {
-      console.log("playing at position", position);
-      return exports.output.run(helpers.filteredPoints.run(points, position, accuracy), context);
-    }
-  };
-
-}).call(this);
-
-
-},{"./output.coffee":12,"./stream.coffee":13,"./music_helpers/music_helpers.coffee":10}],12:[function(require,module,exports){
+},{"./player.coffee":11}],12:[function(require,module,exports){
 (function() {
   var helpers;
 
@@ -349,7 +323,43 @@
 }).call(this);
 
 
-},{"./audiolib/osc_lib.coffee":1,"./music_helpers/music_helpers.coffee":10}],10:[function(require,module,exports){
+},{"./audiolib/osc_lib.coffee":1,"./music_helpers/music_helpers.coffee":10}],11:[function(require,module,exports){
+(function() {
+  var helpers, stream;
+
+  exports.output = require('./output.coffee');
+
+  stream = require('./stream.coffee');
+
+  helpers = require('./music_helpers/music_helpers.coffee');
+
+  exports.init = function() {
+    exports.positions = stream.init();
+    return exports.points = stream.init();
+  };
+
+  exports.init();
+
+  exports.run = function(points, context, position, accuracy) {
+    var pointsChanged, positionsChanged;
+    if (position == null) {
+      position = 0;
+    }
+    if (accuracy == null) {
+      accuracy = 0.01;
+    }
+    pointsChanged = exports.points.run(points);
+    positionsChanged = exports.positions.run(position);
+    if (pointsChanged || positionsChanged) {
+      console.log("playing at position", position);
+      return exports.output.run(helpers.filteredPoints.run(points, position, accuracy), context);
+    }
+  };
+
+}).call(this);
+
+
+},{"./output.coffee":12,"./stream.coffee":13,"./music_helpers/music_helpers.coffee":10}],10:[function(require,module,exports){
 (function() {
   var bpmConvert, filteredPoints, humanEar, snap;
 
@@ -368,6 +378,10 @@
   exports.bpmConvert = bpmConvert;
 
   exports.snap = snap;
+
+  if ((typeof window !== "undefined" && window !== null)) {
+    window.SPhelpers = exports;
+  }
 
 }).call(this);
 
