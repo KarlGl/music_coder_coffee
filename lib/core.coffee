@@ -1,3 +1,8 @@
+#
+# Save the context to create sounds and trigger the ui callbacks when playing.
+# Then play on Player.
+#
+
 exports.player = require './player.coffee'
 
 # a mock for an audio context until you set one.

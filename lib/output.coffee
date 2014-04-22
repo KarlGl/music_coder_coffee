@@ -1,5 +1,5 @@
 #
-# 
+# Manage refs to all oscillators. Create them to play sounds. 
 #
 
 exports.oscLib = require './audiolib/osc_lib.coffee'

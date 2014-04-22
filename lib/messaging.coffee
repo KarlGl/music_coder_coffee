@@ -5,6 +5,11 @@
 
 if (window?)
 
+  # restart and re-draw the whole area.
+  restartEverything = (message)->
+    area = message.area
+    area.restart()
+
   # restart playback. The callback for everything.
   restartPlayback = (message)->
       console.log(message)
@@ -42,3 +47,7 @@ if (window?)
     isFreeplay: restartPlayback
     changedUnits: restartPlayback
     areaResize: restartPlayback
+    gridIsSnap_x: restartEverything
+    gridIsSnap_y: restartEverything
+    gridIsShow_y: restartEverything
+    gridIsShow_x: restartEverything

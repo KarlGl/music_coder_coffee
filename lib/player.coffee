@@ -1,3 +1,7 @@
+#
+# Filter points to only those that will create sound, then pass them to 'output'
+#
+
 exports.output = require './output.coffee'
 stream = require './stream.coffee'
 helpers = require './music_helpers/music_helpers.coffee'

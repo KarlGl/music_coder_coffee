@@ -21,9 +21,14 @@
 
 },{}],2:[function(require,module,exports){
 (function() {
-  var restartPlayback;
+  var restartEverything, restartPlayback;
 
   if ((typeof window !== "undefined" && window !== null)) {
+    restartEverything = function(message) {
+      var area;
+      area = message.area;
+      return area.restart();
+    };
     restartPlayback = function(message) {
       var area, args;
       console.log(message);
@@ -59,7 +64,11 @@
       isPlaying: restartPlayback,
       isFreeplay: restartPlayback,
       changedUnits: restartPlayback,
-      areaResize: restartPlayback
+      areaResize: restartPlayback,
+      gridIsSnap_x: restartEverything,
+      gridIsSnap_y: restartEverything,
+      gridIsShow_y: restartEverything,
+      gridIsShow_x: restartEverything
     };
   }
 

@@ -1,3 +1,7 @@
+#
+# Repeatedly trigger play in 'core'
+#
+
 exports.core = require './core.coffee'
 snap = require './music_helpers/snap.coffee'
 
