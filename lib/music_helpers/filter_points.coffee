@@ -17,3 +17,5 @@ exports.run = (points, startP, accuracy=0.1)->
 if (window?)
   window.filterPoints = exports
   
+# noteToFrequency = (note) ->
+  # Math.pow(2, (note - 69) / 12) * 440.0

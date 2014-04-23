@@ -1,17 +1,33 @@
 ;(function(e,t,n){function i(n,s){if(!t[n]){if(!e[n]){var o=typeof require=="function"&&require;if(!s&&o)return o(n,!0);if(r)return r(n,!0);throw new Error("Cannot find module '"+n+"'")}var u=t[n]={exports:{}};e[n][0](function(t){var r=e[n][1][t];return i(r?r:t)},u,u.exports)}return t[n].exports}var r=typeof require=="function"&&require;for(var s=0;s<n.length;s++)i(n[s]);return i})({1:[function(require,module,exports){
 (function() {
   exports.makeOsc = function(context) {
-    var raw;
-    raw = context.createOscillator();
-    raw.connect(context.destination);
-    raw.noteOn(0);
+    var channelData, raw, source;
+    raw = context.createBuffer(1, 44100, 44100);
+    channelData = raw.getChannelData(0);
+    source = context.createBufferSource();
+    source.loop = true;
+    source.buffer = raw;
     return {
       raw: raw,
+      source: source,
       destroy: function() {
-        return raw.disconnect();
+        return source.disconnect(0);
       },
       setF: function(f) {
-        return raw.frequency.value = f;
+        var i, setData, __, _i, _len, _results;
+        setData = function(i, channelData) {
+          return channelData[i] = Math.sin(16 * 180 * (i / channelData.length));
+        };
+        _results = [];
+        for (i = _i = 0, _len = channelData.length; _i < _len; i = ++_i) {
+          __ = channelData[i];
+          _results.push(setData(i, channelData));
+        }
+        return _results;
+      },
+      engage: function() {
+        source.connect(context.destination);
+        return source.noteOn(0);
       }
     };
   };
@@ -20,6 +36,29 @@
 
 
 },{}],2:[function(require,module,exports){
+(function() {
+  exports.makeOsc = function(context) {
+    var raw;
+    raw = context.createOscillator();
+    raw.connect(context.destination);
+    return {
+      raw: raw,
+      destroy: function() {
+        return raw.disconnect();
+      },
+      setF: function(f) {
+        return raw.frequency.value = f;
+      },
+      engage: function() {
+        return raw.noteOn(0);
+      }
+    };
+  };
+
+}).call(this);
+
+
+},{}],3:[function(require,module,exports){
 (function() {
   var restartEverything, restartPlayback;
 
@@ -75,7 +114,7 @@
 }).call(this);
 
 
-},{}],3:[function(require,module,exports){
+},{}],4:[function(require,module,exports){
 (function() {
   exports.run = function(bpm, quality, beatsPerBar) {
     var samplesPerMinute;
@@ -92,7 +131,7 @@
 }).call(this);
 
 
-},{}],4:[function(require,module,exports){
+},{}],5:[function(require,module,exports){
 (function() {
   var fixJsNumbers;
 
@@ -124,7 +163,7 @@
 }).call(this);
 
 
-},{}],5:[function(require,module,exports){
+},{}],6:[function(require,module,exports){
 (function() {
   var HIGHEST_POSSIBLE_FREQUENCY, LOWSEST_POSSIBLE_FREQUENCY;
 
@@ -143,7 +182,7 @@
 }).call(this);
 
 
-},{}],6:[function(require,module,exports){
+},{}],7:[function(require,module,exports){
 (function() {
   exports.snapToGrid = function(pos, gridCellSize) {
     if (gridCellSize == null) {
@@ -155,7 +194,7 @@
 }).call(this);
 
 
-},{}],7:[function(require,module,exports){
+},{}],8:[function(require,module,exports){
 (function() {
   var snap;
 
@@ -213,7 +252,7 @@
 }).call(this);
 
 
-},{"./core.coffee":8,"./music_helpers/snap.coffee":6}],9:[function(require,module,exports){
+},{"./core.coffee":9,"./music_helpers/snap.coffee":7}],10:[function(require,module,exports){
 (function() {
   var con, helpers;
 
@@ -246,7 +285,7 @@
 }).call(this);
 
 
-},{"./auto_play.coffee":7,"./music_helpers/music_helpers.coffee":10}],8:[function(require,module,exports){
+},{"./auto_play.coffee":8,"./music_helpers/music_helpers.coffee":11}],9:[function(require,module,exports){
 (function() {
   var core;
 
@@ -285,11 +324,11 @@
 }).call(this);
 
 
-},{"./player.coffee":11}],12:[function(require,module,exports){
+},{"./player.coffee":12}],13:[function(require,module,exports){
 (function() {
   var helpers;
 
-  exports.oscLib = require('./audiolib/osc_lib.coffee');
+  exports.oscLib = require('./audiolib/buffer_lib.coffee');
 
   helpers = require('./music_helpers/music_helpers.coffee');
 
@@ -303,6 +342,7 @@
     return exports.oscs = positions.map(function(position) {
       var osc;
       exports.oscs.push(osc = exports.oscLib.makeOsc(context));
+      osc.engage();
       position.osc = osc;
       return position;
     });
@@ -332,7 +372,7 @@
 }).call(this);
 
 
-},{"./audiolib/osc_lib.coffee":1,"./music_helpers/music_helpers.coffee":10}],11:[function(require,module,exports){
+},{"./audiolib/buffer_lib.coffee":1,"./music_helpers/music_helpers.coffee":11}],12:[function(require,module,exports){
 (function() {
   var helpers, stream;
 
@@ -368,7 +408,7 @@
 }).call(this);
 
 
-},{"./output.coffee":12,"./stream.coffee":13,"./music_helpers/music_helpers.coffee":10}],10:[function(require,module,exports){
+},{"./output.coffee":13,"./stream.coffee":14,"./music_helpers/music_helpers.coffee":11}],11:[function(require,module,exports){
 (function() {
   var bpmConvert, filteredPoints, humanEar, snap;
 
@@ -395,7 +435,7 @@
 }).call(this);
 
 
-},{"./human_ear.coffee":5,"./filter_points.coffee":4,"./bpm_convert.coffee":3}],13:[function(require,module,exports){
+},{"./human_ear.coffee":6,"./filter_points.coffee":5,"./bpm_convert.coffee":4}],14:[function(require,module,exports){
 (function() {
   var _;
 
@@ -420,7 +460,7 @@
 }).call(this);
 
 
-},{"../node_modules/lodash/lodash":14}],14:[function(require,module,exports){
+},{"../node_modules/lodash/lodash":15}],15:[function(require,module,exports){
 (function(global){/**
  * @license
  * Lo-Dash 2.4.1 <http://lodash.com/>
@@ -7602,5 +7642,5 @@
 }.call(this));
 
 })(window)
-},{}]},{},[1,7,9,8,2,3,4,5,10,6,12,11,13])
+},{}]},{},[1,2,8,10,9,3,4,5,6,11,7,13,12,14])
 ;
