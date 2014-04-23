@@ -14,20 +14,24 @@ if (window?)
   restartPlayback = (message)->
       console.log(message)
       area = message.area
-      if area.isPlaying
+      state = area.state
+
+      # render state into the input box
+      area.renderState()
+      if state.isPlaying
         args = 
-          points: area.units.map (unit)->
+          points: state.units.map (unit)->
             position: unit.x
             val: unit.y
-          bpm: area.bpm
+          bpm: state.bpm
 
           # how many blocks possible in a row without touching basically.
-          quality: 1 / area.blockSize
-          blockSize: area.blockSize
+          quality: 1 / state.blockSize
+          blockSize: state.blockSize
           beatsPerBar: 1
-          startPos: area.playSlider
+          startPos: state.playSlider
           endPos: 1
-          isLoop: area.isLooping
+          isLoop: state.isLooping
 
           eachPlayStartCallback: (newPos)->
             area.playIndicator.setX(newPos)
@@ -47,7 +51,13 @@ if (window?)
     isFreeplay: restartPlayback
     changedUnits: restartPlayback
     areaResize: restartPlayback
+
+    # grid showing
     gridIsSnap_x: restartEverything
     gridIsSnap_y: restartEverything
     gridIsShow_y: restartEverything
     gridIsShow_x: restartEverything
+    
+    # state input box
+    stateInput: restartEverything
+    units: restartPlayback

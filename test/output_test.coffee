@@ -9,6 +9,7 @@ exports.run = (test)->
   spy = sinon.stub(core.oscLib, 'makeOsc', ->
     destroy: ->
     setF: ->
+    engage: ->
   )
   spy2 = sinon.stub(core, 'setF')
   test.equal spy2.callCount, 0, "Freq not set"

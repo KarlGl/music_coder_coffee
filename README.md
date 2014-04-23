@@ -1,8 +1,9 @@
-### Status
-Not working yet.
+### Demo
+http://karlgl.github.io/sound_paint_gui/
+
 ### Purpose
-Program audio in the browser.
-### Dependancies
+Draw sound.
+### Development
 * grunt build tool.
 * node package manager.
 ```
@@ -10,4 +11,10 @@ npm install
 ```
 ```
 grunt
+```
+
+To bundle the css from jquery-ui
+
+```
+npm install npm-css -g
 ```

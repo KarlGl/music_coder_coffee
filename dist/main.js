@@ -37,6 +37,66 @@
 
 },{}],2:[function(require,module,exports){
 (function() {
+  var restartEverything, restartPlayback;
+
+  if ((typeof window !== "undefined" && window !== null)) {
+    restartEverything = function(message) {
+      var area;
+      area = message.area;
+      return area.restart();
+    };
+    restartPlayback = function(message) {
+      var area, args, state;
+      console.log(message);
+      area = message.area;
+      state = area.state;
+      area.renderState();
+      if (state.isPlaying) {
+        args = {
+          points: state.units.map(function(unit) {
+            return {
+              position: unit.x,
+              val: unit.y
+            };
+          }),
+          bpm: state.bpm,
+          quality: 1 / state.blockSize,
+          blockSize: state.blockSize,
+          beatsPerBar: 1,
+          startPos: state.playSlider,
+          endPos: 1,
+          isLoop: state.isLooping,
+          eachPlayStartCallback: function(newPos) {
+            return area.playIndicator.setX(newPos);
+          }
+        };
+        return window.core.run(args);
+      } else {
+        return window.core.kill();
+      }
+    };
+    window.callbacks = {
+      playSlider: restartPlayback,
+      bpm: restartPlayback,
+      isLooping: restartPlayback,
+      isPlaying: restartPlayback,
+      isFreeplay: restartPlayback,
+      changedUnits: restartPlayback,
+      areaResize: restartPlayback,
+      gridIsSnap_x: restartEverything,
+      gridIsSnap_y: restartEverything,
+      gridIsShow_y: restartEverything,
+      gridIsShow_x: restartEverything,
+      stateInput: restartEverything,
+      units: restartPlayback
+    };
+  }
+
+}).call(this);
+
+
+},{}],3:[function(require,module,exports){
+(function() {
   exports.makeOsc = function(context) {
     var raw;
     raw = context.createOscillator();
@@ -58,74 +118,20 @@
 }).call(this);
 
 
-},{}],3:[function(require,module,exports){
-(function() {
-  var restartEverything, restartPlayback;
-
-  if ((typeof window !== "undefined" && window !== null)) {
-    restartEverything = function(message) {
-      var area;
-      area = message.area;
-      return area.restart();
-    };
-    restartPlayback = function(message) {
-      var area, args;
-      console.log(message);
-      area = message.area;
-      if (area.isPlaying) {
-        args = {
-          points: area.units.map(function(unit) {
-            return {
-              position: unit.x,
-              val: unit.y
-            };
-          }),
-          bpm: area.bpm,
-          quality: 1 / area.blockSize,
-          blockSize: area.blockSize,
-          beatsPerBar: 1,
-          startPos: area.playSlider,
-          endPos: 1,
-          isLoop: area.isLooping,
-          eachPlayStartCallback: function(newPos) {
-            return area.playIndicator.setX(newPos);
-          }
-        };
-        return window.core.run(args);
-      } else {
-        return window.core.kill();
-      }
-    };
-    window.callbacks = {
-      playSlider: restartPlayback,
-      bpm: restartPlayback,
-      isLooping: restartPlayback,
-      isPlaying: restartPlayback,
-      isFreeplay: restartPlayback,
-      changedUnits: restartPlayback,
-      areaResize: restartPlayback,
-      gridIsSnap_x: restartEverything,
-      gridIsSnap_y: restartEverything,
-      gridIsShow_y: restartEverything,
-      gridIsShow_x: restartEverything
-    };
-  }
-
-}).call(this);
-
-
 },{}],4:[function(require,module,exports){
 (function() {
-  exports.run = function(bpm, quality, beatsPerBar) {
-    var samplesPerMinute;
-    if (beatsPerBar == null) {
-      beatsPerBar = 4;
-    }
-    samplesPerMinute = bpm / beatsPerBar;
-    return {
-      increment: 1 / quality,
-      sleep: (60000 / samplesPerMinute) / quality
-    };
+  var HIGHEST_POSSIBLE_FREQUENCY, LOWSEST_POSSIBLE_FREQUENCY;
+
+  LOWSEST_POSSIBLE_FREQUENCY = 15;
+
+  HIGHEST_POSSIBLE_FREQUENCY = 1000;
+
+  exports.run = function(startF) {
+    return startF * HIGHEST_POSSIBLE_FREQUENCY + LOWSEST_POSSIBLE_FREQUENCY;
+  };
+
+  exports.freqToRange = function(startF) {
+    return (startF - LOWSEST_POSSIBLE_FREQUENCY) / HIGHEST_POSSIBLE_FREQUENCY;
   };
 
 }).call(this);
@@ -165,18 +171,16 @@
 
 },{}],6:[function(require,module,exports){
 (function() {
-  var HIGHEST_POSSIBLE_FREQUENCY, LOWSEST_POSSIBLE_FREQUENCY;
-
-  LOWSEST_POSSIBLE_FREQUENCY = 15;
-
-  HIGHEST_POSSIBLE_FREQUENCY = 1000;
-
-  exports.run = function(startF) {
-    return startF * HIGHEST_POSSIBLE_FREQUENCY + LOWSEST_POSSIBLE_FREQUENCY;
-  };
-
-  exports.freqToRange = function(startF) {
-    return (startF - LOWSEST_POSSIBLE_FREQUENCY) / HIGHEST_POSSIBLE_FREQUENCY;
+  exports.run = function(bpm, quality, beatsPerBar) {
+    var samplesPerMinute;
+    if (beatsPerBar == null) {
+      beatsPerBar = 4;
+    }
+    samplesPerMinute = bpm / beatsPerBar;
+    return {
+      increment: 1 / quality,
+      sleep: (60000 / samplesPerMinute) / quality
+    };
   };
 
 }).call(this);
@@ -324,55 +328,7 @@
 }).call(this);
 
 
-},{"./player.coffee":12}],13:[function(require,module,exports){
-(function() {
-  var helpers;
-
-  exports.oscLib = require('./audiolib/buffer_lib.coffee');
-
-  helpers = require('./music_helpers/music_helpers.coffee');
-
-  exports.killAll = function() {
-    return exports.oscs.forEach(function(position) {
-      return position.osc.destroy();
-    });
-  };
-
-  exports.makeAll = function(positions, context) {
-    return exports.oscs = positions.map(function(position) {
-      var osc;
-      exports.oscs.push(osc = exports.oscLib.makeOsc(context));
-      osc.engage();
-      position.osc = osc;
-      return position;
-    });
-  };
-
-  exports.setF = function(vals) {
-    return exports.oscs.map(function(position, i) {
-      return position.osc.setF(helpers.humanEar.run(vals[i]));
-    });
-  };
-
-  exports.run = function(positions, context) {
-    if (positions.length !== exports.oscs.length) {
-      console.log("number of units changed", positions);
-      exports.killAll();
-      exports.makeAll(positions, context);
-    } else {
-      console.log("number of units did not change", positions);
-    }
-    return exports.setF(positions.map(function(position) {
-      return position.val;
-    }));
-  };
-
-  exports.oscs = [];
-
-}).call(this);
-
-
-},{"./audiolib/buffer_lib.coffee":1,"./music_helpers/music_helpers.coffee":11}],12:[function(require,module,exports){
+},{"./player.coffee":12}],12:[function(require,module,exports){
 (function() {
   var helpers, stream;
 
@@ -435,7 +391,55 @@
 }).call(this);
 
 
-},{"./human_ear.coffee":6,"./filter_points.coffee":5,"./bpm_convert.coffee":4}],14:[function(require,module,exports){
+},{"./human_ear.coffee":4,"./filter_points.coffee":5,"./bpm_convert.coffee":6}],13:[function(require,module,exports){
+(function() {
+  var helpers;
+
+  exports.oscLib = require('./audiolib/osc_lib.coffee');
+
+  helpers = require('./music_helpers/music_helpers.coffee');
+
+  exports.killAll = function() {
+    return exports.oscs.forEach(function(position) {
+      return position.osc.destroy();
+    });
+  };
+
+  exports.makeAll = function(positions, context) {
+    return exports.oscs = positions.map(function(position) {
+      var osc;
+      exports.oscs.push(osc = exports.oscLib.makeOsc(context));
+      osc.engage();
+      position.osc = osc;
+      return position;
+    });
+  };
+
+  exports.setF = function(vals) {
+    return exports.oscs.map(function(position, i) {
+      return position.osc.setF(helpers.humanEar.run(vals[i]));
+    });
+  };
+
+  exports.run = function(positions, context) {
+    if (positions.length !== exports.oscs.length) {
+      console.log("number of units changed", positions);
+      exports.killAll();
+      exports.makeAll(positions, context);
+    } else {
+      console.log("number of units did not change", positions);
+    }
+    return exports.setF(positions.map(function(position) {
+      return position.val;
+    }));
+  };
+
+  exports.oscs = [];
+
+}).call(this);
+
+
+},{"./audiolib/osc_lib.coffee":3,"./music_helpers/music_helpers.coffee":11}],14:[function(require,module,exports){
 (function() {
   var _;
 
@@ -7642,5 +7646,5 @@
 }.call(this));
 
 })(window)
-},{}]},{},[1,2,8,10,9,3,4,5,6,11,7,13,12,14])
+},{}]},{},[1,3,8,10,9,2,6,5,4,11,7,13,12,14])
 ;
