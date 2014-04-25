@@ -60,20 +60,69 @@
 
 },{}],3:[function(require,module,exports){
 (function() {
+  exports.run = function(bpm, quality, beatsPerBar) {
+    var samplesPerMinute;
+    if (beatsPerBar == null) {
+      beatsPerBar = 4;
+    }
+    samplesPerMinute = bpm / beatsPerBar;
+    return {
+      increment: 1 / quality,
+      sleep: (60000 / samplesPerMinute) / quality
+    };
+  };
+
+}).call(this);
+
+
+},{}],4:[function(require,module,exports){
+(function() {
+  var fixJsNumbers;
+
+  fixJsNumbers = function(number) {
+    return parseFloat(number.toPrecision(12));
+  };
+
+  exports.run = function(points, startP, accuracy) {
+    if (accuracy == null) {
+      accuracy = 0.1;
+    }
+    accuracy = fixJsNumbers(accuracy);
+    return points.filter(function(point) {
+      var pos;
+      if ((point.position != null)) {
+        startP = fixJsNumbers(startP);
+        pos = fixJsNumbers(point.position);
+        return pos > fixJsNumbers(startP - accuracy) && pos < fixJsNumbers(startP + accuracy);
+      } else {
+        return true;
+      }
+    });
+  };
+
+  if ((typeof window !== "undefined" && window !== null)) {
+    window.filterPoints = exports;
+  }
+
+}).call(this);
+
+
+},{}],5:[function(require,module,exports){
+(function() {
   var restartEverything, restartPlayback;
 
   if ((typeof window !== "undefined" && window !== null)) {
     restartEverything = function(message) {
       var area;
       area = message.area;
-      return area.app.guiBuilder.restartArea(area);
+      return area.restartGUI();
     };
     restartPlayback = function(message) {
       var area, args, state;
       console.log(message);
       area = message.area;
       state = area.state;
-      area.app.textArea.renderState(area);
+      area.app.saveLoad.renderState();
       if (state.isPlaying) {
         args = {
           points: state.units.map(function(unit) {
@@ -113,55 +162,6 @@
       stateInput: restartEverything,
       units: restartPlayback
     };
-  }
-
-}).call(this);
-
-
-},{}],4:[function(require,module,exports){
-(function() {
-  exports.run = function(bpm, quality, beatsPerBar) {
-    var samplesPerMinute;
-    if (beatsPerBar == null) {
-      beatsPerBar = 4;
-    }
-    samplesPerMinute = bpm / beatsPerBar;
-    return {
-      increment: 1 / quality,
-      sleep: (60000 / samplesPerMinute) / quality
-    };
-  };
-
-}).call(this);
-
-
-},{}],5:[function(require,module,exports){
-(function() {
-  var fixJsNumbers;
-
-  fixJsNumbers = function(number) {
-    return parseFloat(number.toPrecision(12));
-  };
-
-  exports.run = function(points, startP, accuracy) {
-    if (accuracy == null) {
-      accuracy = 0.1;
-    }
-    accuracy = fixJsNumbers(accuracy);
-    return points.filter(function(point) {
-      var pos;
-      if ((point.position != null)) {
-        startP = fixJsNumbers(startP);
-        pos = fixJsNumbers(point.position);
-        return pos > fixJsNumbers(startP - accuracy) && pos < fixJsNumbers(startP + accuracy);
-      } else {
-        return true;
-      }
-    });
-  };
-
-  if ((typeof window !== "undefined" && window !== null)) {
-    window.filterPoints = exports;
   }
 
 }).call(this);
@@ -439,7 +439,7 @@
 }).call(this);
 
 
-},{"./human_ear.coffee":6,"./filter_points.coffee":5,"./bpm_convert.coffee":4}],14:[function(require,module,exports){
+},{"./human_ear.coffee":6,"./filter_points.coffee":4,"./bpm_convert.coffee":3}],14:[function(require,module,exports){
 (function() {
   var _;
 
@@ -7646,5 +7646,5 @@
 }.call(this));
 
 })(window)
-},{}]},{},[1,2,8,10,3,9,4,5,6,11,7,13,12,14])
+},{}]},{},[1,2,8,10,9,3,4,5,6,11,7,13,12,14])
 ;
