@@ -8,7 +8,8 @@ if (window?)
   # restart and re-draw the whole area.
   restartEverything = (message)->
     area = message.area
-    area.restart()
+
+    area.app.guiBuilder.restartArea(area)
 
   # restart playback. The callback for everything.
   restartPlayback = (message)->
@@ -17,7 +18,7 @@ if (window?)
       state = area.state
 
       # render state into the input box
-      area.renderState()
+      area.app.textArea.renderState(area)
       if state.isPlaying
         args = 
           points: state.units.map (unit)->
