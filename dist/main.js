@@ -1,33 +1,51 @@
 ;(function(e,t,n){function i(n,s){if(!t[n]){if(!e[n]){var o=typeof require=="function"&&require;if(!s&&o)return o(n,!0);if(r)return r(n,!0);throw new Error("Cannot find module '"+n+"'")}var u=t[n]={exports:{}};e[n][0](function(t){var r=e[n][1][t];return i(r?r:t)},u,u.exports)}return t[n].exports}var r=typeof require=="function"&&require;for(var s=0;s<n.length;s++)i(n[s]);return i})({1:[function(require,module,exports){
 (function() {
-  exports.makeOsc = function(context) {
-    var channelData, raw, source;
-    raw = context.createBuffer(1, 44100, 44100);
-    channelData = raw.getChannelData(0);
-    source = context.createBufferSource();
-    source.loop = true;
-    source.buffer = raw;
+  exports.makeOsc = function(position, context) {
+    var numberOfChannels, sampleRate, waveData;
+    waveData = position.waveData;
+    numberOfChannels = 1;
+    sampleRate = 44100;
     return {
-      raw: raw,
-      source: source,
-      destroy: function() {
-        return source.disconnect(0);
-      },
-      setF: function(f) {
-        var i, setData, __, _i, _len, _results;
+      setF: function(hertz) {
+        var channelData, i, length, raw, setData, source, __, _i, _len;
+        if (this.destroy != null) {
+          this.destroy();
+        }
+        length = sampleRate * (1 / hertz);
+        raw = context.createBuffer(numberOfChannels, length, sampleRate);
+        channelData = raw.getChannelData(0);
+        source = context.createBufferSource();
+        source.loop = true;
+        source.buffer = raw;
         setData = function(i, channelData) {
-          return channelData[i] = Math.sin(16 * 180 * (i / channelData.length));
+          var getClosest, inBuffer, oneOver, point, trunc;
+          inBuffer = i / length;
+          getClosest = function(n, closest) {
+            if ((waveData[n] != null)) {
+              closest = waveData[n];
+              if (closest.x < inBuffer) {
+                return getClosest(n + 1, closest);
+              } else {
+                return [n, closest];
+              }
+            } else {
+              return [n - 1, closest];
+            }
+          };
+          trunc = getClosest(0);
+          oneOver = waveData[trunc[0]];
+          point = (oneOver != null) && Math.abs(oneOver.x - inBuffer) < Math.abs(trunc[1].x - inBuffer) ? oneOver : trunc[1];
+          return channelData[i] = point != null ? point.y * 2 - 1 : 0;
         };
-        _results = [];
         for (i = _i = 0, _len = channelData.length; _i < _len; i = ++_i) {
           __ = channelData[i];
-          _results.push(setData(i, channelData));
+          setData(i, channelData);
         }
-        return _results;
-      },
-      engage: function() {
         source.connect(context.destination);
-        return source.noteOn(0);
+        source.noteOn(0);
+        return this.destroy = function() {
+          return source.disconnect(0);
+        };
       }
     };
   };
@@ -239,6 +257,7 @@
 
   core.context = {
     destination: null,
+    createBuffer: function() {},
     createOscillator: function() {
       return {
         connect: function() {},
@@ -272,7 +291,7 @@
 (function() {
   var helpers;
 
-  exports.oscLib = require('./audiolib/osc_lib.coffee');
+  exports.oscLib = require('./audiolib/buffer_lib.coffee');
 
   helpers = require('./music_helpers/music_helpers.coffee');
 
@@ -285,8 +304,7 @@
   exports.makeAll = function(positions, context) {
     return exports.oscs = positions.map(function(position) {
       var osc;
-      exports.oscs.push(osc = exports.oscLib.makeOsc(context));
-      osc.engage();
+      exports.oscs.push(osc = exports.oscLib.makeOsc(position, context));
       position.osc = osc;
       return position;
     });
@@ -316,7 +334,7 @@
 }).call(this);
 
 
-},{"./audiolib/osc_lib.coffee":2,"./music_helpers/music_helpers.coffee":10}],11:[function(require,module,exports){
+},{"./audiolib/buffer_lib.coffee":1,"./music_helpers/music_helpers.coffee":10}],11:[function(require,module,exports){
 (function() {
   var helpers, stream;
 
@@ -7628,7 +7646,7 @@
         };
         return window.sound_paint.run(args);
       } else {
-        return window.core.kill();
+        return window.sound_paint.kill();
       }
     };
     window.callbacks = {

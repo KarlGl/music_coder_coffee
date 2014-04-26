@@ -9,6 +9,7 @@ exports.player = require './player.coffee'
 core = {}
 core.context =
   destination: null, 
+  createBuffer: -> 
   createOscillator: -> 
     connect: ->
     noteOn: ->

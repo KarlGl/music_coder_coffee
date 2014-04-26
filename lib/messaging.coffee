@@ -42,7 +42,7 @@ if (window?)
 
         window.sound_paint.run(args)
       else
-        window.core.kill()
+        window.sound_paint.kill()
   window.callbacks = 
     
     #sliders
