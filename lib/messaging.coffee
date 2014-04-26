@@ -3,6 +3,8 @@
 # e.g. on isPlaying button changing state, do what callback?
 # 
 
+_ = require 'lodash'
+
 if (window?)
 
   # restart and re-draw the whole area.
@@ -23,6 +25,8 @@ if (window?)
           points: state.units.map (unit)->
             position: unit.x
             val: unit.y
+            waveData: _.find(area.state.waveforms, (waveform)->
+              waveform.name == unit.waveName).points
           bpm: state.bpm
 
           # how many blocks possible in a row without touching basically.
@@ -36,7 +40,7 @@ if (window?)
           eachPlayStartCallback: (newPos)->
             area.playIndicator.setX(newPos)
 
-        window.core.run(args)
+        window.sound_paint.run(args)
       else
         window.core.kill()
   window.callbacks = 

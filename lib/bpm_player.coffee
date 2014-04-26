@@ -20,7 +20,7 @@ exports.run = (params)->
 if (window?)
   # globally export our functions
   window.run = exports.run
-  window.core = exports
+  window.sound_paint = exports
   if AudioContext?
     con = AudioContext
   if webkitAudioContext?
