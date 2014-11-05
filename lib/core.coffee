@@ -12,7 +12,7 @@ core.context =
   createBuffer: -> 
   createOscillator: -> 
     connect: ->
-    noteOn: ->
+    start: ->
     disconnect: ->
     frequency: 
       value: null

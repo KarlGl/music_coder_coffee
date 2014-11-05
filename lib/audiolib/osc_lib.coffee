@@ -25,5 +25,5 @@ exports.makeOsc = (context)->
   setF: (f)->
     raw.frequency.value = f
   engage: ()->
-    raw.noteOn(0)
+    raw.start(0)
     

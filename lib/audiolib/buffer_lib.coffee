@@ -59,7 +59,7 @@ exports.makeOsc = (position, context)->
     setData(i, channelData) for __, i in channelData
 
     source.connect(context.destination)
-    source.noteOn(0)
+    source.start(0)
 
     this.destroy = ->
       source.disconnect(0)

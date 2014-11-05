@@ -3,7 +3,7 @@ http://karlgl.github.io/sound_paint_gui/
 
 ### Purpose
 Draw sound.
-### Development
+### Development Dependencies
 * grunt build tool.
 * node package manager.
 ```

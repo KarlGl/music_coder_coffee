@@ -2,7 +2,8 @@
 # Manage refs to all oscillators. Create them to play sounds. 
 #
 
-exports.oscLib = require './audiolib/buffer_lib.coffee'
+exports.bufferLib = require './audiolib/buffer_lib.coffee'
+# exports.oscLib = require './audiolib/osc_lib.coffee'
 helpers = require './music_helpers/music_helpers.coffee'
 
 exports.killAll = ()->
@@ -11,7 +12,7 @@ exports.killAll = ()->
 
 exports.makeAll = (positions, context)->
   exports.oscs = positions.map (position)-> 
-    exports.oscs.push(osc = exports.oscLib.makeOsc(position, context))
+    exports.oscs.push(osc = exports.bufferLib.makeOsc(position, context))
     # osc.engage()
     position.osc = osc
     position
